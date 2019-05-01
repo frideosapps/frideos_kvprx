@@ -42,10 +42,8 @@ abstract class PersistentValue<T> extends StreamedValue<T> {
     await _update(value);
   }
 
-  Future<bool> _update(T value) async {
-    await _kvpProvider.updateByKey(
-        persistentKey, (value is! String) ? value.toString() : value);
-  }
+  Future<int> _update(T value) async => await _kvpProvider.updateByKey(
+      persistentKey, (value is! String) ? value.toString() : value);
 }
 
 class PersistentInteger extends PersistentValue<int> {

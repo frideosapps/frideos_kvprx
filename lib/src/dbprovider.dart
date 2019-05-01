@@ -35,6 +35,7 @@ class DbProvider {
     } catch (e) {
       print(e);
       logs.add(e);
+      return false;
     }
   }
 
@@ -60,6 +61,7 @@ class DbProvider {
     } catch (e) {
       print(e);
       logs.add(e);
+      return -1;
     }
   }
 
@@ -80,6 +82,7 @@ class DbProvider {
     } catch (e) {
       print(e);
       logs.add(e);
+      return false;
     }
   }
 

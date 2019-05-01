@@ -25,7 +25,6 @@ class KeyValueProvider {
   final String table;
   String createTable;
 
-  @override
   Future<bool> init() async {
     try {
       var exists = await dbProvider.checkTableExists(table);
@@ -43,7 +42,6 @@ class KeyValueProvider {
     }
   }
 
-  @override
   Future<List<KeyValue>> getAll() async {
     final query = 'SELECT * FROM $table';
 
@@ -155,6 +153,7 @@ class KeyValueProvider {
     } catch (e) {
       print(e);
       dbProvider.logs.add(e);
+      return -1;
     }
   }
 
@@ -167,6 +166,7 @@ class KeyValueProvider {
     } catch (e) {
       print(e);
       dbProvider.logs.add(e);
+      return -1;
     }
   }
 
@@ -179,6 +179,7 @@ class KeyValueProvider {
     } catch (e) {
       print(e);
       dbProvider.logs.add(e);
+      return -1;
     }
   }
 
@@ -191,6 +192,7 @@ class KeyValueProvider {
     } catch (e) {
       print(e);
       dbProvider.logs.add(e);
+      return -1;
     }
   }
 
@@ -203,6 +205,7 @@ class KeyValueProvider {
     } catch (e) {
       print(e);
       dbProvider.logs.add(e);
+      return -1;
     }
   }
 
@@ -215,10 +218,11 @@ class KeyValueProvider {
     } catch (e) {
       print(e);
       dbProvider.logs.add(e);
+      return -1;
     }
   }
 
-  Future<KeyValue> bulkInsert(List<KeyValue> kvps) async {
+  Future<void> bulkInsert(List<KeyValue> kvps) async {
     String sql = 'INSERT INTO $table (key, value) VALUES';
     String sqlArgs = '';
     List<dynamic> args = [];
@@ -246,7 +250,7 @@ class KeyValueProvider {
     }
   }
 
-  Future<KeyValue> insertMap(Map<String, String> map) async {
+  Future<void> insertMap(Map<String, String> map) async {
     String sql = 'INSERT INTO $table (key, value) VALUES';
     String sqlArgs = '';
     List<dynamic> args = [];
@@ -259,8 +263,7 @@ class KeyValueProvider {
         sqlArgs += ',';
       }
 
-      args.add(key);
-      args.add(value);
+      args..add(key)..add(value);
 
       i++;
     });
@@ -277,7 +280,7 @@ class KeyValueProvider {
     }
   }
 
-  Future<KeyValue> bulkDelete(List<KeyValue> kvps) async {
+  Future<void> bulkDelete(List<KeyValue> kvps) async {
     String sql = 'DELETE FROM $table WHERE id IN (';
     String sqlArgs = '';
     List<dynamic> args = [];
@@ -306,7 +309,7 @@ class KeyValueProvider {
     }
   }
 
-  Future<KeyValue> bulkDeleteKeys(List<String> keys) async {
+  Future<void> bulkDeleteKeys(List<String> keys) async {
     String sql = 'DELETE FROM $table WHERE key IN (';
     String sqlArgs = '';
     List<dynamic> args = [];
@@ -352,7 +355,5 @@ class KeyValueProvider {
     }
   }
 
-  Future<int> truncate() async {
-    await dbProvider.truncate(table);
-  }
+  Future<int> truncate() async => await dbProvider.truncate(table);
 }
