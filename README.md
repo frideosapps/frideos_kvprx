@@ -3,9 +3,9 @@
 **frideos_kvprx** is a library that offers persistent and reactive classes, and helpers to easily store key/value pairs in the database, using the sqflite plugin.
 
 - **DbProvider** : class used to inizialize the database.
+- **PersistentValue and derived classes** : classes derived from the `StreamedValue` class of the [frideos_core](https://pub.dartlang.org/packages/frideos_core) package to make a key/value pair persistent and reactive using streams. Used along with the `StreamBuilder` or the  `ValueBuilder` widget of the [frideos](https://pub.dartlang.org/packages/frideos) package, make it possible to update the UI with the last value on the stream and save the value to the database every time a new value is set.
 - **KeyValue** : class to handle a key/value pair.
 - **KeyValueProvider** : class with methods to get, insert, update, delete the key/value pairs stored in the db.
-- **PersistentValue and derived classes** : classes derived from the `StreamedValue` class of the [frideos_core](https://pub.dartlang.org/packages/frideos_core) package to make a key/value pair persistent and reactive using streams. Used along with the `StreamBuilder` or the  `ValueBuilder` widget of the [frideos](https://pub.dartlang.org/packages/frideos) package, make it possible to update the UI with the last value on the stream and save the value to the database every time a new value is set.
 
 
 ## DbProvider
@@ -35,10 +35,67 @@ await dbProvider.deleteDatabase();
 await dbProvider.truncate('tableName');
 ```
 
+## PersistentValues
+These classes derive from the `PersistentValue` class that extends the `StreamedValue` class of the frideos package in order to take advantages of the streams, so that, every time a new value is set, this is both stored in the database (if the flag `continuousSave` is set to `true` ) and sent to the stream to drive a `StreamBuilder` or a `ValueBuilder` to update the UI.
+
+
+#### - PersistentString
+#### - PersistentBoolean
+#### - PersistentInt
+#### - PersistentDouble
+
+### Usage:
+
+#### 1 - Declare an instance of a `PersistentValue` derived object
+
+- `table` is set by default to 'kvp', so that if not specified,
+all the instances of a `PersistentValue` derived class, will store their values to the same table. 
+
+- `persistentKey` is the key associated to the `PersistentValue` derived entity.
+
+- `initialData` is used when no record is found in the database to make an insert with the first key/value pair having as key the argument passed to the `persistentKey` parameter and for value the argument passed to the `initialData` parameter. 
+
+- `continuousSave` is set by default to `true`, so that every time to the `persistentString` is given a new value, the record in the db will be updated. If set to `false`, to update the record in the db, it is necessary to call the `save` method.
+
+
+```dart    
+  final persistentString = PersistentString(
+      table: 'kvprx',      
+      persistentKey: 'persistentValueString',
+      initialData: 'ABCDEFGHIJKLMNOPRQSTUVWXY',
+      continuousSave: true);
+```
+#### 2 - Initialization
+```dart
+// Initialize the dbProvider
+await dbProvider.init();
+
+// Call the init method of the `PersistentString` class to initialize
+// the KeyValueProvider, check if a record is already present in the db
+// and set it as the current value. If no record is found, the argument passed
+// to the `initialData` parameters is used to insert a new record in the db.
+await persistentString.init(dbProvider: dbProvider);
+```
+
+
+#### 3 - Change the value
+```dart
+// Every time a new value is set, this will be sent to stream and stored 
+// in the database.
+persistentString.value = 'New String';
+
+// Only if `continuousSave` is set to `false` it is necessary to call
+// the `save` method in order to update the record in the db.
+// await persistentString.save();
+```
 
 
 ## KeyValueProvider
-
+By default the table name is set to 'kvp'. It is important to notice that
+if more `KeyValueProvider` are created with the default table name, both
+the `getAll` and `truncate` method will affects all the records. To avoid
+this behavior, use the `table` paramater to give to each provider a different
+table name.
 
 #### Initialization
 ```dart
@@ -85,6 +142,8 @@ await dbProvider.truncate('tableName');
 
 
 #### - Insert a map
+Given a `map` of type `<String, String>`, this method save all
+of its key/value pairs in the database.
 
 ```dart
 final map = {'1': 'a', '2': 'b', '3': 'c', '4': 'd'};
@@ -96,6 +155,12 @@ await kvpDb.insertMap(map);
 ### GET
 
 #### - Get all key/value pairs
+Get all the key/value pairs stored in the table. It is important 
+to notice that if more `KeyValueProvider` share the same table
+(by default is set to 'kvp'), this method will get the ones created
+with other providers. To avoid this behavior, use the `table` parameter
+to specify a different table.
+
 ```dart
     // GET ALL
     final pairs = await kvpDb.getAll();
@@ -196,64 +261,17 @@ await kvpDb.bulkDeleteKeys(['testKeyValue3', 'testKeyValue4','testKeyValue5']);
 
 ### TRUNCATE
 
-Method used to delete all the records in the table.
+To delete all the records in the table. It is important to notice
+that if more provider used the same table (set by defalt to 'kvp')
+this method will delete even the key/value pairs created with the other
+providers. To avoid this behavior, initialize the `KeyValueProvider`
+giving to the `table` parameter a different value for each provider.
 
 ```dart
 await kvpDb.truncate();
 ```
 
-## PersistentValues
 
-#### - PersistentString
-#### - PersistentBoolean
-#### - PersistentInt
-#### - PersistentDouble
-
-### Usage:
-
-#### 1 - Declare an instance of a `PersistentValue` derived object
-
-- `table` is set by default to 'kvprx', so that if not specified,
-all the instances of a `PersistentValue` derived class, will store their values to the same table. 
-
-
-- `persistentKey` is the key associated to the `PersistentValue` derived entity.
-
-- `initialData` is used when no record is found in the database to make an insert with the first key/value pair having as key the argument passed to the `persistentKey` parameter and for value the argument passed to the `initialData` parameter. 
-
-- `continuousSave` is set by default to `true`, so that every time to the `persistentString` is given a new value, the record in the db will be updated. If set to `false`, to update the record in the db, it is necessary to call the `save` method.
-
-
-```dart    
-  final persistentString = PersistentString(
-      table: 'kvprx',      
-      persistentKey: 'persistentValueString',
-      initialData: 'ABCDEFGHIJKLMNOPRQSTUVWXY',
-      continuousSave: true);
-```
-#### 2 - Initialization
-```dart
-// Initialize the dbProvider
-await dbProvider.init();
-
-// Call the init method of the `PersistentString` class to initialize
-// the KeyValueProvider, check if a record is already present in the db
-// and set it as the current value. If no record is found, the argument passed
-// to the `initialData` parameters is used to insert a new record in the db.
-await persistentString.init(dbProvider: dbProvider);
-```
-
-
-#### 3 - Change the value
-```dart
-// Every time a new value is set, this will be sent to stream and stored 
-// in the database.
-persistentString.value = 'New String';
-
-// Only if `continuousSave` is set to `false` it is necessary to call
-// the `save` method in order to update the record in the db.
-// await persistentString.save();
-```
 
 
 

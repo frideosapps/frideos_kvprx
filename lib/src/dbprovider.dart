@@ -2,6 +2,10 @@ import 'package:path/path.dart' as path;
 
 import 'package:sqflite/sqflite.dart' as sqflite;
 
+//
+// Used to open a connection with a database. By default
+// the database name is 'appdb.db'.
+//
 class DbProvider {
   DbProvider({this.databaseName = 'appdb.db'});
 

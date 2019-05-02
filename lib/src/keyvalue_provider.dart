@@ -3,9 +3,13 @@ import 'package:meta/meta.dart';
 import 'dbprovider.dart';
 import 'models/keyvalue_model.dart';
 
-/// KeyValueProvider class (TODO)
+/// KeyValueProvider class
 ///
-/// By default the table name is set to 'kvp'.
+/// By default the table name is set to 'kvp'. It is important to notice that
+/// if more [KeyValueProvider] are created with the default table name, both
+/// the `getAll` and `truncate` method will affects all the records. To avoid
+/// this behavior, use the `table` paramater to give to each provider a
+/// different table name.
 ///
 class KeyValueProvider {
   KeyValueProvider({@required this.dbProvider, this.table = 'kvp'}) {
@@ -42,6 +46,11 @@ class KeyValueProvider {
     }
   }
 
+  /// Get all the key/value pairs stored in the table. It is important
+  /// to notice that if more [KeyValueProvider] share the same table
+  /// (by default is set to 'kvp'), this method will get the ones created
+  /// with other providers. To avoid this behavior, use the `table` parameter
+  /// to specify a different table.
   Future<List<KeyValue>> getAll() async {
     final query = 'SELECT * FROM $table';
 
@@ -250,6 +259,8 @@ class KeyValueProvider {
     }
   }
 
+  /// Given a map of type `<String, String>`, this method save all
+  /// of its key/value pairs in the database.
   Future<void> insertMap(Map<String, String> map) async {
     String sql = 'INSERT INTO $table (key, value) VALUES';
     String sqlArgs = '';
@@ -355,5 +366,10 @@ class KeyValueProvider {
     }
   }
 
+  /// To delete all the records in the table. It is important to notice
+  /// that if more provider used the same table (set by defalt to 'kvp')
+  /// this method will delete even the key/value pairs created with the other
+  /// providers. To avoid this behavior, initialize the [KeyValueProvider]
+  /// giving to the `table` parameter a different value for each provider.
   Future<int> truncate() async => await dbProvider.truncate(table);
 }

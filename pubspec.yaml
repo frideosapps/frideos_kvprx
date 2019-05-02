@@ -1,6 +1,6 @@
 name: frideos_kvprx
 description: A library with persistent and reactive classes, and key/value pairs storing helpers, using the sqflite plugin.
-version: 0.1.0+1
+version: 0.1.1
 author: Francesco Mineo <frideosapps@gmail.com>
 homepage: https://github.com/frideosapps/frideos_kvprx
 

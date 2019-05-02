@@ -1,7 +1,17 @@
 import '../config.dart';
 
+/// KeyValue class
+///
+/// Model used to store and get key/value pairs to the database.
+///
 class KeyValue {
   KeyValue({this.key, this.value});
+
+  KeyValue.fromMap(Map<String, dynamic> map) {
+    id = map[columnId];
+    key = map[columnKey];
+    value = map[columnValue];
+  }
 
   int id;
   String key;
@@ -13,12 +23,6 @@ class KeyValue {
       map[columnId] = id;
     }
     return map;
-  }
-
-  KeyValue.fromMap(Map<String, dynamic> map) {
-    id = map[columnId];
-    key = map[columnKey];
-    value = map[columnValue];
   }
 
   @override
