@@ -38,6 +38,10 @@ class KeyValueProvider {
         await dbProvider.db.execute(createTable);
       }
 
+      var sql = 'PRAGMA case_sensitive_like = true';
+
+      await dbProvider.db.execute(sql);
+
       return true;
     } catch (e) {
       print(e);
@@ -343,6 +347,18 @@ class KeyValueProvider {
       await dbProvider.db.transaction((txn) async {
         await txn.execute(sql, args);
       });
+    } catch (e) {
+      print(e);
+      dbProvider.logs.add(e);
+    }
+  }
+
+  Future<void> bulkDeleteKeysStartWith(String prefixKeys) async {
+    String sql = 'DELETE FROM $table WHERE key LIKE ?;';
+    String prefix = '$prefixKeys%';
+
+    try {
+      await dbProvider.db.execute(sql, [prefix]);
     } catch (e) {
       print(e);
       dbProvider.logs.add(e);

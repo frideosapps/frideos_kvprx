@@ -46,12 +46,12 @@ class _MyHomePageState extends State<MyHomePage> {
 
   // Another KeyValueProvider can be used to store key/value pairs
   // in another table of the same database (e.g. one table 'appstate'
-  // to store info about the appstate and another one name 'users' o 'products'
-  // for other purposes).
+  // to store info about the appstate and another one name 'users' or
+  // 'products' for other purposes).
   //
-  // It is important to notice that by default the table is set to 'kvp'. So,
-  // it is necessary to use the parameter `table` on the second provider in
-  // order to not share the same table.
+  // It is important to notice that by default the table is set to 'kvp'.
+  // So, it is necessary to use the parameter `table` on the second provider
+  // in order to not share the same table.
   KeyValueProvider kvp2;
 
   // These two StreamedValue are used to update the UI with the
@@ -63,10 +63,11 @@ class _MyHomePageState extends State<MyHomePage> {
   // If provided, the `initialData` parameter is used to make the first insert
   // in the db if no value associated with the given `persistentKey` is found.
   //
-  // It is important to notice the in this example all the persistentValues share
-  // the same table 'kvprx'. It could be possible create a KeyValueProvider and
-  // initialize it with the `table` parameters set to 'kvprx' in order to handle
-  // these key/value/pairs (e.g. get all the key/value pairs stored).
+  // It is important to notice the in this example all the persistentValues
+  // share the same table 'kvprx'. It could be possible create a
+  // KeyValueProvider and initialize it with the `table` parameters set to
+  // 'kvprx' in order to handle these key/value/pairs (e.g. get all the
+  // key/value pairs stored).
   final persistentString = PersistentString(
       table: 'kvprx',
       persistentKey: 'persistentValueString',
@@ -133,17 +134,16 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> updateRx() async {
     var rand = math.Random();
+    var nextChar = persistentString.value[rand.nextInt(25)];
 
     // Every time a new value is set, the record in the database
     // is updated. To avoid this behavior set to `false` the
     // `continuousSave` in PersistentValue derived objects initialization
     // and call the `save` method to update the record in the database
     // whenever you need.
-
+    persistentString.value += nextChar;
     persistentBoolean.value = !persistentBoolean.value;
     persistentDouble.value += 0.51;
-    var nextChar = persistentString.value[rand.nextInt(25)];
-    persistentString.value += nextChar;
     persistentInteger.value += 2;
   }
 
@@ -179,9 +179,9 @@ class _MyHomePageState extends State<MyHomePage> {
     dbProvider.close();
     keyValue1.dispose();
     keyValue2.dispose();
+    persistentString.dispose();
     persistentBoolean.dispose();
     persistentDouble.dispose();
-    persistentString.dispose();
     persistentInteger.dispose();
     super.dispose();
   }

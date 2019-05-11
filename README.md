@@ -241,7 +241,24 @@ await kvpDb.deleteById(id);
 ```dart
 await kvpDb.deleteByKey('key');
 ```
-#### - Bulk delete 
+#### - Bulk delete keys starting with a given prefix
+```dart
+final kvps = [
+      KeyValue(key: 'prefix_Value1', value: 'test value1'),
+      KeyValue(key: 'prefix_Value2', value: 'test value2'),
+      KeyValue(key: 'Prefix2Value3', value: 'test value3'),
+      KeyValue(key: 'Prefix2Value4', value: 'test value4'),
+      KeyValue(key: 'Value5', value: 'test value5'),
+    ];
+
+// INSERT
+await kvpDb.bulkInsert(kvps);
+
+// Bulk delete (2 out of 5)
+await kvpDb.bulkDeleteKeysStartWith('prefix');
+```
+
+#### - Bulk delete a list of kvp
 ```dart
 final kvps = [
       KeyValue(key: 'testKeyValue1', value: 'test value1'),
@@ -258,6 +275,9 @@ await kvpDb.bulkInsert(kvps);
 // Bulk delete (3 out of 6)
 await kvpDb.bulkDeleteKeys(['testKeyValue3', 'testKeyValue4','testKeyValue5']);
 ```
+
+
+
 
 ### TRUNCATE
 

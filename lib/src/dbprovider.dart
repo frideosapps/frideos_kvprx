@@ -65,8 +65,8 @@ class DbProvider {
     } catch (e) {
       print(e);
       logs.add(e);
-      return -1;
     }
+    return -1;
   }
 
   Future<bool> checkTableExists(String tableName) async {

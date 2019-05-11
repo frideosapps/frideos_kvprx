@@ -369,4 +369,51 @@ void main() {
 
     await kvpDb.dbProvider.deleteDatabase();
   });
+
+  test('Bulk delete keys start with a given prefix', () async {
+    final dbProvider = DbProvider(databaseName: 'test.db');
+    await dbProvider.init();
+
+    final kvpDb = KeyValueProvider(dbProvider: dbProvider);
+    var init = await kvpDb.init();
+
+    await kvpDb.truncate();
+
+    final kvps = [
+      KeyValue(key: 'prefix_Value1', value: 'test value1'),
+      KeyValue(key: 'prefix_Value2', value: 'test value2'),
+      KeyValue(key: 'Prefix2Value3', value: 'test value3'),
+      KeyValue(key: 'Prefix2Value4', value: 'test value4'),
+      KeyValue(key: 'Value5', value: 'test value5'),
+    ];
+
+    // INSERT
+    await kvpDb.bulkInsert(kvps);
+
+    // GET ALL
+    var pairs = await kvpDb.getAll();
+    expect(pairs.length, 5);
+
+    // Bulk delete (2 out of 5)
+    await kvpDb.bulkDeleteKeysStartWith('prefix');
+
+    // GET ALL
+    pairs = await kvpDb.getAll();
+    expect(pairs.length, 3);
+
+    // Bulk delete (2 out of 5)
+    await kvpDb.bulkDeleteKeysStartWith('Prefix2');
+
+    // GET ALL
+    pairs = await kvpDb.getAll();
+    expect(pairs.length, 1);
+
+    // It should be the last key from the original list
+    expect(pairs.last.key, kvps.last.key);
+
+    await kvpDb.dbProvider.close();
+    expect(kvpDb.dbProvider.db.isOpen, false);
+
+    await kvpDb.dbProvider.deleteDatabase();
+  });
 }
