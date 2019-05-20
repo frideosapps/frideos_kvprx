@@ -1,26 +1,28 @@
 import 'package:meta/meta.dart';
 
 import 'dbprovider.dart';
-import 'models/keyvalue_model.dart';
+import 'models/keyvaluemeta_model.dart';
 
-/// KeyValueProvider class
+/// KeyValueMetaProvider class
 ///
-/// By default the table name is set to 'kvp'. It is important to notice that
-/// if more [KeyValueProvider] are created with the default table name, both
-/// the `getAll` and `truncate` method will affects all the records. To avoid
-/// this behavior, use the `table` paramater to give to each provider a
-/// different table name.
+/// By default the table name is set to 'kvpmeta'. It is important to notice
+/// that if more [KeyValueProvider] are created with the default table name,
+/// both the `getAll` and `truncate` method will affects all the records.
+/// To avoid this behavior, use the `table` paramater to give to each provider
+/// a different table name.
 ///
-class KeyValueProvider {
-  KeyValueProvider({@required this.dbProvider, this.table = 'kvp'})
+class KeyValueMetaProvider {
+  KeyValueMetaProvider({@required this.dbProvider, this.table = 'kvpmeta'})
       : assert(dbProvider != null) {
     createTable = '''
         CREATE TABLE $table ( 
           id integer primary key autoincrement, 
           key text UNIQUE not null,
-          value text);
+          value text,
+          meta text);
         CREATE UNIQUE INDEX idx_${table}_id ON $table (id);
         CREATE UNIQUE INDEX idx_${table}_key ON $table (key);
+        CREATE UNIQUE INDEX idx_${table}_meta ON $table (meta);
         ''';
   }
 
@@ -50,35 +52,35 @@ class KeyValueProvider {
   }
 
   /// Get all the key/value pairs stored in the table. It is important
-  /// to notice that if more [KeyValueProvider] share the same table
-  /// (by default is set to 'kvp'), this method will get the ones created
+  /// to notice that if more [KeyValueMetaProvider] share the same table
+  /// (by default is set to 'kvpmeta'), this method will get the ones created
   /// with other providers. To avoid this behavior, use the `table` parameter
   /// to specify a different table.
-  Future<List<KeyValue>> getAll() async {
+  Future<List<KeyValueMeta>> getAll() async {
     final query = 'SELECT * FROM $table';
 
-    List<KeyValue> pairs = [];
+    List<KeyValueMeta> pairs = [];
 
     final result = await dbProvider.db.rawQuery(query);
     if (result.isNotEmpty) {
       for (var r in result) {
-        pairs.add(KeyValue.fromMap(r));
+        pairs.add(KeyValueMeta.fromMap(r));
       }
     }
 
     return pairs;
   }
 
-  Future<KeyValue> getKeyValue(KeyValue kvp) async {
+  Future<KeyValueMeta> getKeyValueMeta(KeyValueMeta kvp) async {
     assert(kvp != null && kvp.id != null);
 
-    KeyValue dbKey;
+    KeyValueMeta dbKey;
     final query = 'SELECT * FROM $table WHERE id = ?';
 
     try {
       final result = await dbProvider.db.rawQuery(query, [kvp.id]);
       if (result.isNotEmpty) {
-        dbKey = KeyValue.fromMap(result.first);
+        dbKey = KeyValueMeta.fromMap(result.first);
       }
     } catch (e) {
       print(e);
@@ -88,16 +90,16 @@ class KeyValueProvider {
     return dbKey;
   }
 
-  Future<KeyValue> getById(int id) async {
+  Future<KeyValueMeta> getById(int id) async {
     assert(id != null);
 
-    KeyValue dbKey;
+    KeyValueMeta dbKey;
     final query = 'SELECT * FROM $table WHERE id = ?';
 
     try {
       final result = await dbProvider.db.rawQuery(query, [id]);
       if (result.isNotEmpty) {
-        dbKey = KeyValue.fromMap(result.first);
+        dbKey = KeyValueMeta.fromMap(result.first);
       }
     } catch (e) {
       print(e);
@@ -107,16 +109,31 @@ class KeyValueProvider {
     return dbKey;
   }
 
-  Future<KeyValue> getByKey(String key) async {
+  Future<List<KeyValueMeta>> getByMeta(String meta) async {
+    final query = 'SELECT * FROM $table WHERE meta = \'$meta\' ';
+
+    List<KeyValueMeta> pairs = [];
+
+    final result = await dbProvider.db.rawQuery(query);
+    if (result.isNotEmpty) {
+      for (var r in result) {
+        pairs.add(KeyValueMeta.fromMap(r));
+      }
+    }
+
+    return pairs;
+  }
+
+  Future<KeyValueMeta> getByKey(String key) async {
     assert(key != null);
 
-    KeyValue dbKey;
+    KeyValueMeta dbKey;
     final query = 'SELECT * FROM $table WHERE key = ?';
 
     try {
       final result = await dbProvider.db.rawQuery(query, [key]);
       if (result.isNotEmpty) {
-        dbKey = KeyValue.fromMap(result.first);
+        dbKey = KeyValueMeta.fromMap(result.first);
       }
     } catch (e) {
       print(e);
@@ -126,7 +143,7 @@ class KeyValueProvider {
     return dbKey;
   }
 
-  Future<KeyValue> insert(KeyValue kvp) async {
+  Future<KeyValueMeta> insert(KeyValueMeta kvp) async {
     assert(kvp.key != null);
 
     try {
@@ -139,14 +156,14 @@ class KeyValueProvider {
     return kvp;
   }
 
-  Future<bool> insertKeyValue(String key, String value) async {
+  Future<bool> insertKeyValueMeta(String key, String value, String meta) async {
     assert(key != null);
 
     try {
       await dbProvider.db.execute('''
-        INSERT INTO $table (key, value) 
-        VALUES  (?, ?); 
-        ''', [key, value]);
+        INSERT INTO $table (key, value, meta) 
+        VALUES  (?, ?, ?); 
+        ''', [key, value, meta]);
       return true;
     } catch (e) {
       print(e);
@@ -156,7 +173,7 @@ class KeyValueProvider {
     return false;
   }
 
-  Future<int> update(KeyValue kvp, String value) async {
+  Future<int> update(KeyValueMeta kvp, String value) async {
     assert(kvp != null);
 
     try {
@@ -174,6 +191,7 @@ class KeyValueProvider {
 
     try {
       final query = 'UPDATE $table SET value = ? WHERE id = ?';
+
       return await dbProvider.db.rawUpdate(query, [value, id]);
     } catch (e) {
       print(e);
@@ -195,7 +213,18 @@ class KeyValueProvider {
     }
   }
 
-  Future<int> delete(KeyValue kvp) async {
+  Future<int> updateMeta(String key, String newMeta) async {
+    try {
+      final query = 'UPDATE $table SET meta = ? WHERE key = ?';
+      return await dbProvider.db.rawUpdate(query, [newMeta, key]);
+    } catch (e) {
+      print(e);
+      dbProvider.logs.add(e);
+      return -1;
+    }
+  }
+
+  Future<int> delete(KeyValueMeta kvp) async {
     assert(kvp != null);
 
     try {
@@ -234,7 +263,7 @@ class KeyValueProvider {
     }
   }
 
-  Future<void> bulkInsert(List<KeyValue> kvps) async {
+  Future<void> bulkInsert(List<KeyValueMeta> kvps) async {
     String sql = 'INSERT INTO $table (key, value) VALUES';
     String sqlArgs = '';
     List<dynamic> args = [];
@@ -262,39 +291,7 @@ class KeyValueProvider {
     }
   }
 
-  /// Given a map of type `<String, String>`, this method save all
-  /// of its key/value pairs in the database.
-  Future<void> insertMap(Map<String, String> map) async {
-    String sql = 'INSERT INTO $table (key, value) VALUES';
-    String sqlArgs = '';
-    List<dynamic> args = [];
-
-    int i = 0;
-    map.forEach((key, value) {
-      sqlArgs += ' (? , ?) ';
-
-      if (i < map.length - 1) {
-        sqlArgs += ',';
-      }
-
-      args..add(key)..add(value);
-
-      i++;
-    });
-
-    sql += sqlArgs;
-
-    try {
-      await dbProvider.db.transaction((txn) async {
-        await txn.execute(sql, args);
-      });
-    } catch (e) {
-      print(e);
-      dbProvider.logs.add(e);
-    }
-  }
-
-  Future<void> bulkDelete(List<KeyValue> kvps) async {
+  Future<void> bulkDelete(List<KeyValueMeta> kvps) async {
     String sql = 'DELETE FROM $table WHERE id IN (';
     String sqlArgs = '';
     List<dynamic> args = [];
@@ -364,7 +361,18 @@ class KeyValueProvider {
     }
   }
 
-  Future<void> bulkUpdate(List<KeyValue> kvps) async {
+  Future<int> bulkUpdateMeta(String meta, String newMeta) async {
+    try {
+      final query = 'UPDATE $table SET meta = ? WHERE meta = ?';
+      return await dbProvider.db.rawUpdate(query, [newMeta, meta]);
+    } catch (e) {
+      print(e);
+      dbProvider.logs.add(e);
+      return -1;
+    }
+  }
+
+  Future<void> bulkUpdate(List<KeyValueMeta> kvps) async {
     try {
       await dbProvider.db.transaction((txn) async {
         var batch = txn.batch();
@@ -382,9 +390,9 @@ class KeyValueProvider {
   }
 
   /// To delete all the records in the table. It is important to notice
-  /// that if more provider used the same table (set by defalt to 'kvp')
+  /// that if more provider used the same table (set by defalt to 'kvpmeta')
   /// this method will delete even the key/value pairs created with the other
-  /// providers. To avoid this behavior, initialize the [KeyValueProvider]
+  /// providers. To avoid this behavior, initialize the [KeyValueMetaProvider]
   /// giving to the `table` parameter a different value for each provider.
   Future<int> truncate() async => await dbProvider.truncate(table);
 }

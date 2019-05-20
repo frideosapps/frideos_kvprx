@@ -6,6 +6,7 @@
 - **PersistentValue and derived classes** : classes derived from the `StreamedValue` class of the [frideos_core](https://pub.dartlang.org/packages/frideos_core) package to make a key/value pair persistent and reactive using streams. Used along with the `StreamBuilder` or the  `ValueBuilder` widget of the [frideos](https://pub.dartlang.org/packages/frideos) package, make it possible to update the UI with the last value on the stream and save the value to the database every time a new value is set.
 - **KeyValue** : class to handle a key/value pair.
 - **KeyValueProvider** : class with methods to get, insert, update, delete the key/value pairs stored in the db.
+- **KeyValueMetaProvider** : similar to the `KeyValueProvider`, but it is possible add a tag to every key/value pair.
 
 
 ## DbProvider
@@ -91,11 +92,7 @@ persistentString.value = 'New String';
 
 
 ## KeyValueProvider
-By default the table name is set to 'kvp'. It is important to notice that
-if more `KeyValueProvider` are created with the default table name, both
-the `getAll` and `truncate` method will affects all the records. To avoid
-this behavior, use the `table` paramater to give to each provider a different
-table name.
+By default the table name is set to 'kvp'. It is important to notice that if more `KeyValueProvider` are created with the default table name, both the `getAll` and `truncate` method will affects all the records. To avoid this behavior, use the `table` paramater to give to each provider a different table name.
 
 #### Initialization
 ```dart
@@ -283,14 +280,76 @@ await kvpDb.bulkDeleteKeys(['testKeyValue3', 'testKeyValue4','testKeyValue5']);
 
 To delete all the records in the table. It is important to notice
 that if more provider used the same table (set by defalt to 'kvp')
-this method will delete even the key/value pairs created with the other
-providers. To avoid this behavior, initialize the `KeyValueProvider`
-giving to the `table` parameter a different value for each provider.
+this method will delete even the key/value pairs created with the other providers. To avoid this behavior, initialize the `KeyValueProvider` giving to the `table` parameter a different value for each provider.
 
 ```dart
 await kvpDb.truncate();
 ```
 
+
+## KeyValueMetaProvider
+
+By default the table name is set to 'kvpmeta'. It is important to notice that if more `KeyValueMetaProvider` are created with the default table name, both the `getAll` and `truncate` method will affects all the records. To avoid this behavior, use the `table` paramater to give to each provider a different table name.
+
+It has most of the methods of the `KeyValueProvider` class. When needed, it uses the `KeyValueMeta` model class instead. 
+
+E.g. insert two kvpmeta:
+
+```dart
+    final kvpTest1 = KeyValueMeta(key: 'testKeyValue', value: 'test value', meta: 'meta');
+    final kvpTest2 = KeyValueMeta(key: 'testKeyValue2', value: 'test value2', meta: 'meta2');   
+
+    // INSERT
+    await kvpDb.insert(kvpTest1);
+    await kvpDb.insert(kvpTest2);
+```
+
+
+
+#### Initialization
+```dart
+    final dbProvider = DbProvider(databaseName: 'test.db');
+    await dbProvider.init();
+
+    final kvpDb = KeyValueMetaProvider(dbProvider: dbProvider);
+    var init = await kvpDb.init();
+```
+
+
+#### - Get a list of kvp by getByMeta
+```dart
+    await kvpDb.insertKeyValueMeta('key1', 'value1', 'meta1');
+    await kvpDb.insertKeyValueMeta('key2', 'value2', 'meta1');
+    await kvpDb.insertKeyValueMeta('key3', 'value3', 'meta1');
+    await kvpDb.insertKeyValueMeta('key4', 'value1', 'meta2');
+    await kvpDb.insertKeyValueMeta('key5', 'value2', 'meta2');
+    await kvpDb.insertKeyValueMeta('key6', 'value3', 'meta2');
+
+    // Get all the kvp with the `meta` parameter equal to 'meta2'
+    final pairs = await kvpDb.getByMeta('meta2');
+```
+
+
+#### - Update the meta parameter of a kvp
+```dart
+    await kvpDb.insertKeyValueMeta('key1', 'value1', 'meta1');
+
+    // change the `meta` parameter from 'meta1' to 'meta2'
+    await kvpDb.updateMeta('key1', 'meta2');
+```
+
+#### - Bulk update meta
+```dart
+    await kvpDb.insertKeyValueMeta('key1', 'value1', 'meta1');
+    await kvpDb.insertKeyValueMeta('key2', 'value2', 'meta1');
+    await kvpDb.insertKeyValueMeta('key3', 'value3', 'meta1');
+    await kvpDb.insertKeyValueMeta('key4', 'value1', 'meta2');
+    await kvpDb.insertKeyValueMeta('key5', 'value2', 'meta2');
+    await kvpDb.insertKeyValueMeta('key6', 'value3', 'meta2');
+
+    // the parameter `meta` of all kvps with the meta equal to `meta2` will change to `meta3`
+    await kvpDb.bulkUpdateMeta('meta2', 'meta3');
+```
 
 
 
