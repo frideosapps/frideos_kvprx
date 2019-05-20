@@ -1,4 +1,4 @@
-## [0.3.0] - 20/05/2019
+## [0.3.0+1] - 20/05/2019
 - Added the new `KeyValueMetaProvider`.
 - Code refactoring
 
