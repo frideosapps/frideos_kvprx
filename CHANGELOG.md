@@ -1,3 +1,6 @@
+## [0.4.0] - 21/06/2019
+- Updated to frideos_core 0.5.0
+
 ## [0.3.0+1] - 20/05/2019
 - Added the new `KeyValueMetaProvider`.
 - Code refactoring
